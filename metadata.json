@@ -1,0 +1,8 @@
+{
+  "name": "Briefline",
+  "description": "Two-sided freelance project marketplace and private delivery workspace connecting clients with independent specialists from brief to final handover.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
