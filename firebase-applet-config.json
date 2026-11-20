@@ -3,6 +3,7 @@
   "appId": "1:17802510815:web:2d2acd490ef0fee348446a",
   "apiKey": "AIzaSyBg9_FAsHJhgd0PsJFE1qrzIUqbtNywTLE",
   "authDomain": "vivid-router-v2ts5.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-briefline-f0722276-0106-40d5-83f1-c1736d55d6c4",
   "storageBucket": "vivid-router-v2ts5.firebasestorage.app",
   "messagingSenderId": "17802510815",
   "measurementId": "",

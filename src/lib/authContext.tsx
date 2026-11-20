@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut as firebaseSignOut } from 'firebase/auth';
-import { auth, googleAuthProvider } from './firebase';
+import { auth, googleAuthProvider, syncUserProfileToFirestore } from './firebase';
 import { apiRequest, setAuthToken } from './api';
 
 export interface UserSummary {
@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setAuthToken(idToken);
         const data = await apiRequest<AccountState>('/api/auth/me', { token: idToken });
         if (active) setAccount(data);
+        void syncUserProfileToFirestore(data.user).catch(() => {});
       } catch (err) {
         console.error('Firebase auth sync failed:', err);
       } finally {
@@ -190,6 +191,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthToken(idToken);
     const data = await apiRequest<AccountState>('/api/auth/me', { token: idToken });
     setAccount(data);
+    void syncUserProfileToFirestore(data.user).catch(() => {});
     return data;
   }, []);
 
@@ -211,6 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: patch,
       });
       setAccount(data);
+      void syncUserProfileToFirestore(data.user).catch(() => {});
     },
     []
   );

@@ -23,6 +23,7 @@ import {
 } from '../../db/schema.ts';
 import { validateProjectBrief } from '../../utils/domain.ts';
 import { type AuthRequest, optionalAuth, requireAuth, requireUnrestricted } from '../auth.ts';
+import { mirrorProjectToSupabase } from '../supabase.ts';
 
 const router = Router();
 
@@ -422,6 +423,8 @@ router.post('/api/projects', requireAuth, requireUnrestricted, async (req: AuthR
       })
       .returning();
 
+    void mirrorProjectToSupabase(created);
+
     return res.status(201).json(created);
   } catch (err) {
     console.error('Create project failed:', err);
@@ -496,6 +499,8 @@ router.patch('/api/projects/:id', requireAuth, requireUnrestricted, async (req: 
       })
       .where(eq(projects.id, projectId))
       .returning();
+
+    void mirrorProjectToSupabase(updated);
 
     return res.json(updated);
   } catch (err) {

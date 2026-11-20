@@ -32,6 +32,7 @@ import {
   sanitizeUser,
   verifyPassword,
 } from '../auth.ts';
+import { mirrorFileToSupabaseStorage, recordSignInToSupabase } from '../supabase.ts';
 
 const router = Router();
 
@@ -135,6 +136,13 @@ router.post('/api/auth/register', async (req, res) => {
       linkPath: '/onboarding',
     });
 
+    void recordSignInToSupabase({
+      user: created,
+      authMethod: 'email_signup',
+      ipAddress: req.ip || String(req.headers['x-forwarded-for'] || ''),
+      userAgent: String(req.headers['user-agent'] || ''),
+    });
+
     const token = createSessionToken(created.id, created.uid);
     const payload = await buildAccountPayload(created.id);
     return res.status(201).json({
@@ -159,6 +167,12 @@ router.post('/api/auth/login', async (req, res) => {
     if (!found || !verifyPassword(parsed.data.password, found.passwordHash)) {
       return res.status(401).json({ error: 'Invalid email or password.' });
     }
+    void recordSignInToSupabase({
+      user: found,
+      authMethod: 'email_login',
+      ipAddress: req.ip || String(req.headers['x-forwarded-for'] || ''),
+      userAgent: String(req.headers['user-agent'] || ''),
+    });
     const token = createSessionToken(found.id, found.uid);
     const payload = await buildAccountPayload(found.id);
     return res.json({ token, ...payload });
@@ -184,6 +198,12 @@ router.post('/api/auth/demo-login', async (req, res) => {
     if (!found) {
       return res.status(404).json({ error: 'Demo account is not seeded yet.' });
     }
+    void recordSignInToSupabase({
+      user: found,
+      authMethod: 'demo_login',
+      ipAddress: req.ip || String(req.headers['x-forwarded-for'] || ''),
+      userAgent: String(req.headers['user-agent'] || ''),
+    });
     const token = createSessionToken(found.id, found.uid);
     const payload = await buildAccountPayload(found.id);
     return res.json({ token, ...payload });
@@ -267,6 +287,16 @@ router.post('/api/auth/reset-password', async (req, res) => {
 
 router.get('/api/auth/me', requireAuth, async (req: AuthRequest, res) => {
   try {
+    const authHeader = req.headers.authorization || '';
+    const bearer = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : '';
+    if (bearer && !bearer.startsWith('local.') && req.currentUser) {
+      void recordSignInToSupabase({
+        user: req.currentUser,
+        authMethod: 'google_firebase',
+        ipAddress: req.ip || String(req.headers['x-forwarded-for'] || ''),
+        userAgent: String(req.headers['user-agent'] || ''),
+      });
+    }
     const payload = await buildAccountPayload(req.currentUser!.id);
     if (!payload) return res.status(404).json({ error: 'Account not found.' });
     return res.json(payload);
@@ -662,6 +692,15 @@ router.post('/api/files/upload', requireAuth, requireUnrestricted, async (req: A
           set: { cvFileId: stored.id, updatedAt: new Date() },
         });
     }
+
+    void mirrorFileToSupabaseStorage({
+      fileId: stored.id,
+      scope,
+      ownerId: req.currentUser!.id,
+      fileName,
+      mimeType,
+      buffer: rawBuffer,
+    });
 
     return res.status(201).json(stored);
   } catch (err) {

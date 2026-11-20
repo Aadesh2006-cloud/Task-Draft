@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { AlertTriangle, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { apiRequest } from '../lib/api';
+import { syncProjectBriefToFirestore } from '../lib/firebase';
 import { useAuth } from '../lib/authContext';
 import { Link, useRouter } from '../lib/router';
 import { formatCurrency, validateProjectBrief } from '../utils/domain';
@@ -218,6 +219,19 @@ export function PostProjectWizardPage() {
       const saved = editId
         ? await apiRequest<{ id: number }>(`/api/projects/${editId}`, { method: 'PATCH', body: payload })
         : await apiRequest<{ id: number }>('/api/projects', { method: 'POST', body: payload });
+
+      void syncProjectBriefToFirestore({
+        projectId: saved.id,
+        title: payload.title,
+        category: selectedCategory?.name || 'Custom Brief',
+        subcategory: resolvedSubcategory,
+        budgetType,
+        budgetMin: Number(budgetMin) || 0,
+        budgetMax: Number(budgetMax) || 0,
+        currency,
+        status: publish ? 'open' : 'draft',
+        skills: requiredSkills,
+      }).catch(() => {});
 
       navigate(publish ? `/projects/${saved.id}` : '/dashboard');
     } catch (err) {

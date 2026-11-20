@@ -1,0 +1,225 @@
+{
+  "entities": {
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted administrator lookup document keyed by Firebase UID.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "grantedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "grantedAt"]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Owner-isolated user profile document storing verified identity and Buyer/Seller capability flags.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 254
+        },
+        "activeRole": {
+          "type": "string",
+          "enum": ["buyer", "seller"]
+        },
+        "canBuy": {
+          "type": "boolean"
+        },
+        "canSell": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "name", "email", "activeRole", "canBuy", "canSell", "createdAt", "updatedAt"]
+    },
+    "ProjectBriefSync": {
+      "title": "ProjectBriefSync",
+      "description": "Synchronized project brief metadata document in Firestore for buyer-published briefs.",
+      "type": "object",
+      "properties": {
+        "briefId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "buyerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "projectId": {
+          "type": "integer"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 180
+        },
+        "category": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "subcategory": {
+          "type": "string",
+          "minLength": 0,
+          "maxLength": 80
+        },
+        "budgetType": {
+          "type": "string",
+          "enum": ["fixed", "hourly"]
+        },
+        "budgetMin": {
+          "type": "integer"
+        },
+        "budgetMax": {
+          "type": "integer"
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 6
+        },
+        "status": {
+          "type": "string",
+          "enum": ["draft", "open", "paused", "hired", "closed", "cancelled"]
+        },
+        "skills": {
+          "type": "array",
+          "description": "Up to 15 skill tags."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "briefId",
+        "buyerUid",
+        "projectId",
+        "title",
+        "category",
+        "subcategory",
+        "budgetType",
+        "budgetMin",
+        "budgetMax",
+        "currency",
+        "status",
+        "skills",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WorkspaceEvent": {
+      "title": "WorkspaceEvent",
+      "description": "Append-only private workspace activity record visible strictly to buyer, hired seller, and admins.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "workspaceId": {
+          "type": "integer"
+        },
+        "buyerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "sellerUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "actorUid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "eventType": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "eventId",
+        "workspaceId",
+        "buyerUid",
+        "sellerUid",
+        "actorUid",
+        "eventType",
+        "summary",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Read-only registry of administrator UIDs."
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Owner-isolated user profile and role capability records."
+    },
+    "/project_briefs/{briefId}": {
+      "schema": { "$ref": "#/entities/ProjectBriefSync" },
+      "description": "Buyer-published project brief metadata mirrored to Firestore."
+    },
+    "/workspace_events/{eventId}": {
+      "schema": { "$ref": "#/entities/WorkspaceEvent" },
+      "description": "Participant-only immutable workspace activity events."
+    }
+  }
+}

@@ -14,6 +14,8 @@ import {
   workspaces,
 } from '../../db/schema.ts';
 import { type AuthRequest, requireAdmin, requireAuth } from '../auth.ts';
+import { checkSupabaseHealth } from '../supabase.ts';
+import firebaseConfig from '../../../firebase-applet-config.json' with { type: 'json' };
 
 const router = Router();
 
@@ -244,6 +246,23 @@ router.post('/api/admin/categories', async (req: AuthRequest, res) => {
   } catch (err) {
     console.error('Create category failed:', err);
     return res.status(500).json({ error: 'Failed to create category (name may already exist).' });
+  }
+});
+
+router.get('/api/admin/integrations', async (_req, res) => {
+  try {
+    const supabaseStatus = await checkSupabaseHealth();
+    return res.json({
+      firebase: {
+        projectId: firebaseConfig.projectId,
+        firestoreDatabaseId: firebaseConfig.firestoreDatabaseId || '(default)',
+        authConfigured: Boolean(firebaseConfig.apiKey),
+      },
+      supabase: supabaseStatus,
+    });
+  } catch (err) {
+    console.error('Integration status check failed:', err);
+    return res.status(500).json({ error: 'Failed to check backend integrations.' });
   }
 });
 
